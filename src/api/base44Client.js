@@ -1,16 +1,20 @@
 // src/api/base44Client.js
 // Drop-in Supabase replacement for Base44 SDK
-// Replace the two values below with your Supabase project credentials
-// Dashboard → Settings → API → Project URL & anon/public key
 
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    detectSessionInUrl: true,
+    persistSession: true,
+    flowType: 'pkce',
+  }
+});
 
-// ── Auth helpers (replaces base44 auth methods) ──────────────
+// ── Auth helpers ──────────────────────────────────────────────
 export const auth = {
   signUp: ({ email, password, fullName, phone }) =>
     supabase.auth.signUp({
@@ -38,8 +42,7 @@ export const auth = {
     supabase.auth.onAuthStateChange(callback),
 };
 
-// ── Generic CRUD factory (mirrors base44 entity pattern) ─────
-// Usage: Group.list(), Group.get(id), Group.create(data), etc.
+// ── Generic CRUD factory ──────────────────────────────────────
 function createEntity(tableName) {
   return {
     list: async (filters = {}) => {
@@ -101,17 +104,17 @@ function createEntity(tableName) {
   };
 }
 
-// ── Entities (matches your Base44 entity names exactly) ──────
-export const Group              = createEntity('groups');
-export const Membership         = createEntity('memberships');
-export const Contribution       = createEntity('contributions');
-export const WithdrawalRequest  = createEntity('withdrawal_requests');
-export const Notification       = createEntity('notifications');
+// ── Entities ──────────────────────────────────────────────────
+export const Group             = createEntity('groups');
+export const Membership        = createEntity('memberships');
+export const Contribution      = createEntity('contributions');
+export const WithdrawalRequest = createEntity('withdrawal_requests');
+export const Notification      = createEntity('notifications');
 
-// ── Export supabase client as default (for raw queries) ──────
+// ── Default export ────────────────────────────────────────────
 export default supabase;
 
-// Legacy base44 export for any files still referencing it
+// ── Legacy base44 export ──────────────────────────────────────
 export const base44 = {
   auth: {
     me: async () => {

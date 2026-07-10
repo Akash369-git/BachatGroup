@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { supabase } from "@/api/base44Client";
@@ -20,6 +20,7 @@ export default function GroupDetail() {
   const { id: groupId } = useParams();
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // ── Queries ───────────────────────────────────────────────
   const { data: group, isLoading } = useQuery({
     queryKey: ["group-detail", groupId],
     queryFn: async () => {
@@ -74,6 +75,80 @@ export default function GroupDetail() {
     enabled: !!groupId,
   });
 
+  // ── Supabase Realtime ─────────────────────────────────────
+  useEffect(() => {
+    if (!groupId) return;
+
+    const channel = supabase
+      .channel(`group-${groupId}`)
+
+      // Live group updates (pool balance, member count, status)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "groups", filter: `id=eq.${groupId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["group-detail", groupId] });
+        }
+      )
+
+      // Live membership updates (new member joined, member removed)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "memberships", filter: `group_id=eq.${groupId}` },
+        (payload) => {
+          queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+          queryClient.invalidateQueries({ queryKey: ["group-detail", groupId] });
+          if (payload.eventType === "INSERT" && payload.new?.user_id !== user?.id) {
+            toast.info(`A new member joined the group!`);
+          }
+        }
+      )
+
+      // Live contribution updates (someone marked as paid)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "contributions", filter: `group_id=eq.${groupId}` },
+        (payload) => {
+          queryClient.invalidateQueries({ queryKey: ["group-contributions", groupId] });
+          queryClient.invalidateQueries({ queryKey: ["group-detail", groupId] });
+          if (
+            payload.eventType === "INSERT" &&
+            payload.new?.user_id !== user?.id &&
+            payload.new?.status === "paid"
+          ) {
+            toast.success(`${payload.new.user_name} marked their contribution as paid!`);
+          }
+        }
+      )
+
+      // Live withdrawal updates (new request, vote cast, resolved)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "withdrawal_requests", filter: `group_id=eq.${groupId}` },
+        (payload) => {
+          queryClient.invalidateQueries({ queryKey: ["group-withdrawals", groupId] });
+          queryClient.invalidateQueries({ queryKey: ["group-detail", groupId] });
+
+          if (payload.eventType === "INSERT" && payload.new?.requested_by !== user?.id) {
+            toast.info(`${payload.new.requester_name} submitted a withdrawal request!`);
+          }
+          if (payload.eventType === "UPDATE") {
+            if (payload.new?.status === "approved") {
+              toast.success("Withdrawal request approved! 🎉");
+            } else if (payload.new?.status === "rejected") {
+              toast.error("Withdrawal request was rejected.");
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [groupId, user?.id, queryClient]);
+
+  // ── Render ────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
