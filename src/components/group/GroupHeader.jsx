@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Share2, Settings, Copy, Check, Users, Calendar } from "lucide-react";
 import GroupTypeTag from "@/components/shared/GroupTypeTag";
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -13,11 +12,40 @@ export default function GroupHeader({ group, isAdmin, onOpenSettings }) {
   const poolTarget = contribution * (group.member_count || 1);
   const progress = poolTarget > 0 ? Math.min(((group.pool_balance || 0) / poolTarget) * 100, 100) : 0;
 
+  // Generate full shareable invite link
+  const inviteLink = `${window.location.origin}/groups/join?code=${group.invite_code}`;
+
   const copyInviteCode = () => {
     navigator.clipboard.writeText(group.invite_code);
     setCopied(true);
     toast.success("Invite code copied!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = async () => {
+    // Use native share sheet on mobile if available
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Join ${group.name} on BachatGroup`,
+          text: `Hey! Join my savings group "${group.name}" on BachatGroup. We save ₹${group.group_type} ${group.frequency}. Click the link to join!`,
+          url: inviteLink,
+        });
+      } catch (err) {
+        // User cancelled share or error — fallback to copy
+        if (err.name !== "AbortError") {
+          copyToClipboard();
+        }
+      }
+    } else {
+      // Desktop fallback — copy link to clipboard
+      copyToClipboard();
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(inviteLink);
+    toast.success("Invite link copied! Share it with your friends.");
   };
 
   return (
@@ -62,16 +90,36 @@ export default function GroupHeader({ group, isAdmin, onOpenSettings }) {
 
       {/* Actions */}
       <div className="flex gap-2 pt-1">
-        <Button variant="outline" size="sm" className="rounded-xl gap-2 flex-1" onClick={copyInviteCode}>
+        {/* Copy invite code */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-xl gap-2 flex-1"
+          onClick={copyInviteCode}
+        >
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           {copied ? "Copied!" : group.invite_code}
         </Button>
-        <Button variant="outline" size="sm" className="rounded-xl gap-2" onClick={copyInviteCode}>
+
+        {/* Share invite link */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-xl gap-2"
+          onClick={handleShare}
+        >
           <Share2 className="w-4 h-4" />
           Share
         </Button>
+
+        {/* Settings (admin only) */}
         {isAdmin && (
-          <Button variant="outline" size="sm" className="rounded-xl gap-2" onClick={onOpenSettings}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl"
+            onClick={onOpenSettings}
+          >
             <Settings className="w-4 h-4" />
           </Button>
         )}

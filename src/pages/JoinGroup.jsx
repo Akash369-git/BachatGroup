@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { supabase } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -12,14 +12,32 @@ import { toast } from "sonner";
 export default function JoinGroup() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [code, setCode] = useState("");
   const [searching, setSearching] = useState(false);
   const [joining, setJoining] = useState(false);
   const [group, setGroup] = useState(null);
   const [error, setError] = useState("");
 
-  const handleSearch = async () => {
-    if (!code.trim()) return;
+  // Auto-fill code from invite link ?code=ABC123
+  useEffect(() => {
+    const codeFromUrl = searchParams.get("code");
+    if (codeFromUrl) {
+      setCode(codeFromUrl.toUpperCase());
+    }
+  }, [searchParams]);
+
+  // Auto-search if code came from invite link
+  useEffect(() => {
+    const codeFromUrl = searchParams.get("code");
+    if (codeFromUrl && codeFromUrl.length === 6) {
+      handleSearch(codeFromUrl.toUpperCase());
+    }
+  }, []);
+
+  const handleSearch = async (searchCode) => {
+    const codeToSearch = searchCode || code;
+    if (!codeToSearch.trim()) return;
     setSearching(true);
     setError("");
     setGroup(null);
@@ -28,7 +46,7 @@ export default function JoinGroup() {
       const { data, error: err } = await supabase
         .from("groups")
         .select("*")
-        .eq("invite_code", code.trim().toUpperCase())
+        .eq("invite_code", codeToSearch.trim().toUpperCase())
         .single();
 
       if (err || !data) {
@@ -66,6 +84,11 @@ export default function JoinGroup() {
 
       if ((group.member_count || 0) >= group.max_members) {
         toast.error("This group is full");
+        return;
+      }
+
+      if (group.status === "closed") {
+        toast.error("This group is closed");
         return;
       }
 
@@ -113,7 +136,7 @@ export default function JoinGroup() {
         </Button>
         <div>
           <h1 className="font-heading font-bold text-xl">Join a Group</h1>
-          <p className="text-xs text-muted-foreground">Enter the invite code shared with you</p>
+          <p className="text-xs text-muted-foreground">Enter the invite code or use a shared link</p>
         </div>
       </div>
 
@@ -126,7 +149,11 @@ export default function JoinGroup() {
           className="rounded-xl h-12 font-mono text-lg tracking-widest uppercase"
           maxLength={6}
         />
-        <Button onClick={handleSearch} disabled={searching || !code.trim()} className="rounded-xl h-12 px-6">
+        <Button
+          onClick={() => handleSearch()}
+          disabled={searching || !code.trim()}
+          className="rounded-xl h-12 px-6"
+        >
           {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
         </Button>
       </div>
@@ -135,6 +162,12 @@ export default function JoinGroup() {
         <Card className="p-6 border-destructive/30 bg-destructive/5 text-center">
           <p className="text-sm text-destructive">{error}</p>
         </Card>
+      )}
+
+      {searching && (
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
       )}
 
       {group && (
@@ -158,9 +191,21 @@ export default function JoinGroup() {
             </div>
           </div>
 
+          {group.status === "closed" && (
+            <p className="text-sm text-destructive font-medium text-center">
+              This group is closed and no longer accepting members.
+            </p>
+          )}
+
+          {(group.member_count || 0) >= group.max_members && group.status !== "closed" && (
+            <p className="text-sm text-destructive font-medium text-center">
+              This group is full.
+            </p>
+          )}
+
           <Button
             onClick={handleJoin}
-            disabled={joining || group.status === "closed"}
+            disabled={joining || group.status === "closed" || (group.member_count || 0) >= group.max_members}
             className="w-full h-12 rounded-xl font-semibold"
           >
             {joining ? (
