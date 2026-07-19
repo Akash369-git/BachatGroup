@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "@/lib/AuthContext";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import {
   Mail,
   Wallet,
   Users,
-  TrendingUp,
   ArrowDownToLine,
   Loader2,
   LogOut,
@@ -20,11 +19,18 @@ import GroupTypeTag from "@/components/shared/GroupTypeTag";
 import { Link } from "react-router-dom";
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const { data: memberships = [], isLoading: loadingM } = useQuery({
     queryKey: ["profile-memberships", user?.id],
-    queryFn: () => base44.entities.Membership.filter({ user_id: user?.id }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("memberships")
+        .select("*")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return data;
+    },
     enabled: !!user?.id,
   });
 
@@ -35,20 +41,33 @@ export default function Profile() {
     queryKey: ["profile-groups", groupIds],
     queryFn: async () => {
       if (groupIds.length === 0) return [];
-      const all = await base44.entities.Group.list("-created_date", 100);
-      return all.filter((g) => groupIds.includes(g.id));
+      const { data, error } = await supabase
+        .from("groups")
+        .select("*")
+        .in("id", groupIds)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
     },
     enabled: groupIds.length > 0,
   });
 
   const { data: withdrawals = [] } = useQuery({
     queryKey: ["profile-withdrawals", user?.id],
-    queryFn: () => base44.entities.WithdrawalRequest.filter({ requested_by: user?.id }),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("withdrawal_requests")
+        .select("*")
+        .eq("requested_by", user.id);
+      if (error) throw error;
+      return data;
+    },
     enabled: !!user?.id,
   });
 
   const totalContributed = memberships.reduce((s, m) => s + (m.total_contributed || 0), 0);
   const isLoading = loadingM || loadingG;
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -59,7 +78,7 @@ export default function Profile() {
             <UserCircle className="w-10 h-10 text-primary" />
           </div>
           <div>
-            <h1 className="font-heading font-bold text-xl">{user?.full_name}</h1>
+            <h1 className="font-heading font-bold text-xl">{displayName}</h1>
             <p className="text-sm text-muted-foreground flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5" />
               {user?.email}
@@ -145,7 +164,7 @@ export default function Profile() {
       <Button
         variant="outline"
         className="w-full rounded-xl text-destructive hover:bg-destructive/10 border-destructive/20"
-        onClick={() => base44.auth.logout()}
+        onClick={() => logout()}
       >
         <LogOut className="w-4 h-4 mr-2" />
         Logout
