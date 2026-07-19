@@ -43,13 +43,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = async (shouldRedirect = true) => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setIsAuthenticated(false);
-    if (shouldRedirect) {
-      window.location.href = '/login';
-    }
-  };
+  await supabase.auth.signOut();
+  setUser(null);
+  setIsAuthenticated(false);
+  if (shouldRedirect) {
+    window.location.replace('/login');
+  }
+};
 
   const navigateToLogin = () => {
     window.location.href = '/login';
