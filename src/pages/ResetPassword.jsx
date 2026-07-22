@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,13 +18,23 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
     setLoading(true);
     try {
-      await base44.auth.resetPassword({ resetToken, newPassword });
+      // TODO: wire up real update once email flow is ready:
+      // const { error } = await supabase.auth.updateUser({ password: newPassword });
+      // if (error) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
       window.location.href = "/login";
     } catch (err) {
       setError(err.message || "Failed to reset password");

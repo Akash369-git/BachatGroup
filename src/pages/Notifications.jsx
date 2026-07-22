@@ -4,7 +4,8 @@ import { supabase } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Bell, BellOff, CheckCheck, UserPlus, Wallet, Vote, CircleCheck } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Bell, BellOff, CheckCheck, UserPlus, Wallet, Vote, CircleCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 
@@ -23,6 +24,30 @@ const typeColors = {
   vote_cast: "bg-chart-3/15 text-chart-3",
   withdrawal_resolved: "bg-primary/10 text-primary",
 };
+
+function NotificationsSkeleton() {
+  return (
+    <div className="max-w-2xl mx-auto space-y-4">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-7 w-36" />
+        <Skeleton className="h-8 w-28 rounded-xl" />
+      </div>
+      <div className="space-y-2">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="p-4">
+            <div className="flex gap-3">
+              <Skeleton className="w-9 h-9 rounded-xl flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Notifications() {
   const { user } = useAuth();
@@ -68,13 +93,7 @@ export default function Notifications() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-      </div>
-    );
-  }
+  if (isLoading) return <NotificationsSkeleton />;
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
@@ -101,9 +120,7 @@ export default function Notifications() {
             return (
               <Card
                 key={notif.id}
-                className={`p-4 transition-all cursor-pointer ${
-                  !notif.read ? "border-primary/20 bg-primary/[0.02]" : ""
-                }`}
+                className={`p-4 transition-all cursor-pointer ${!notif.read ? "border-primary/20 bg-primary/[0.02]" : ""}`}
                 onClick={() => markRead(notif)}
               >
                 <div className="flex gap-3">

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,14 +14,15 @@ export default function ForgotPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      await base44.auth.resetPasswordRequest(email);
-    } catch {
-      // Always show success regardless
-    } finally {
-      setLoading(false);
-      setSent(true);
-    }
+
+    // TODO: wire up real email delivery once ready:
+    // await supabase.auth.resetPasswordForEmail(email, {
+    //   redirectTo: `${window.location.origin}/reset-password`,
+    // });
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
+    setLoading(false);
+    setSent(true);
   };
 
   return (
