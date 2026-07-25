@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 const groupTypes = [
   { value: "10", label: "₹10", desc: "Up to 20 members", max: 20, color: "border-primary bg-primary/5" },
-  { value: "50", label: "₹50", desc: "Up to 30 members", max: 30, color: "border-accent bg-accent/10" },
+  { value: "50", label: "₹50", desc: "Up to 30 members", max: 30, color: "border-chart-3 bg-chart-3/5" },
   { value: "100", label: "₹100", desc: "Up to 50 members", max: 50, color: "border-chart-3 bg-chart-3/5" },
 ];
 
@@ -156,6 +156,7 @@ export default function CreateGroup() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="daily">Daily</SelectItem>
               <SelectItem value="weekly">Weekly</SelectItem>
               <SelectItem value="monthly">Monthly</SelectItem>
             </SelectContent>
