@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Share2, Settings, Copy, Check, Users, Calendar } from "lucide-react";
+import PDFExport from "@/components/group/PDFExport";
 import GroupTypeTag from "@/components/shared/GroupTypeTag";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { toast } from "sonner";

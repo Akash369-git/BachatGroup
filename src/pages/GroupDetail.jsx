@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import GroupHeader from "@/components/group/GroupHeader";
+import PDFExport from "@/components/group/PDFExport";
 import MembersList from "@/components/group/MembersList";
 import ContributionSection from "@/components/group/ContributionSection";
 import WithdrawalSection from "@/components/group/WithdrawalSection";
@@ -210,6 +211,15 @@ export default function GroupDetail() {
 
       <GroupHeader group={group} isAdmin={isAdmin} onOpenSettings={() => setSettingsOpen(true)} />
 
+        {/* PDF Export button */}
+        <div className="flex justify-end">
+          <PDFExport
+            group={group}
+            contributions={contributions}
+            members={members}
+          />
+        </div>
+
       <Tabs defaultValue="contributions" className="w-full">
         <TabsList className="w-full bg-muted rounded-xl h-11">
           <TabsTrigger value="contributions" className="flex-1 rounded-lg text-xs">
@@ -229,6 +239,7 @@ export default function GroupDetail() {
             contributions={contributions}
             userId={user?.id}
             membership={myMembership}
+            members={members}
           />
         </TabsContent>
 
