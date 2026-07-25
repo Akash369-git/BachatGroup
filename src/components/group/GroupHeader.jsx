@@ -94,7 +94,7 @@ export default function GroupHeader({ group, isAdmin, onOpenSettings }) {
         <Button
           variant="outline"
           size="sm"
-          className="rounded-xl gap-2 flex-1"
+          className="rounded-xl gap-2 flex-1 bg-muted/50 border-border text-muted-foreground hover:bg-muted hover:text-foreground"
           onClick={copyInviteCode}
         >
           {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
