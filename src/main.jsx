@@ -7,13 +7,8 @@ import "./index.css";
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
-
-  // Current environment (development/production)
   environment: import.meta.env.MODE,
-
-  // Optional: Set your app version from .env
   release: import.meta.env.VITE_APP_VERSION,
-
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration({
@@ -21,26 +16,27 @@ Sentry.init({
       blockAllMedia: false,
     }),
   ],
-
-  // Only send events from production
   enabled: import.meta.env.PROD,
-
-  // Capture 10% of performance transactions
   tracesSampleRate: 0.1,
-
-  // Record 10% of user sessions
   replaysSessionSampleRate: 0.1,
-
-  // Record 100% of sessions that encounter an error
   replaysOnErrorSampleRate: 1.0,
-
-  // Ignore noisy browser errors
   ignoreErrors: [
     "ResizeObserver loop limit exceeded",
     "ResizeObserver loop completed with undelivered notifications",
     "Script error.",
   ],
 });
+
+// ── Dark mode initialization ──────────────────────────────
+// Apply dark mode BEFORE React renders to avoid flash
+const savedTheme = localStorage.getItem("bachatgroup-theme");
+const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+  document.documentElement.classList.add("dark");
+} else {
+  document.documentElement.classList.remove("dark");
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

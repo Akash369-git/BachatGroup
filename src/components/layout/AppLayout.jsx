@@ -3,15 +3,17 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { supabase } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 import {
   LayoutDashboard,
-  Users,
   Bell,
   UserCircle,
   LogOut,
   Menu,
   Plus,
-  UserPlus
+  UserPlus,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +31,7 @@ export default function AppLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isDark, toggle } = useDarkMode();
 
   const { data: unreadNotifs = [] } = useQuery({
     queryKey: ["unread-notifs", user?.id],
@@ -107,44 +110,69 @@ export default function AppLayout() {
                 )}
               </Link>
             ))}
+
+            {/* Dark mode toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggle}
+              className="text-muted-foreground hover:text-foreground ml-1"
+              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+
+            {/* Logout */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => logout()}
-              className="text-muted-foreground hover:text-destructive ml-2"
+              className="text-muted-foreground hover:text-destructive ml-1"
             >
               <LogOut className="w-4 h-4" />
             </Button>
           </nav>
 
           {/* Mobile Menu */}
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-72 pt-12">
-              <div className="flex flex-col gap-2">
-                {user && (
-                  <div className="px-4 py-3 mb-4 bg-muted rounded-xl">
-                    <p className="font-semibold text-sm">{displayName}</p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                  </div>
-                )}
-                {navItems.map((item) => (
-                  <NavLink key={item.path} item={item} onClick={() => setMobileOpen(false)} />
-                ))}
-                <button
-                  onClick={() => logout()}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all mt-4"
-                >
-                  <LogOut className="w-5 h-5" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </SheetContent>
-          </Sheet>
+          <div className="md:hidden flex items-center gap-2">
+            {/* Dark mode toggle on mobile */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggle}
+              className="text-muted-foreground"
+            >
+              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
+
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72 pt-12">
+                <div className="flex flex-col gap-2">
+                  {user && (
+                    <div className="px-4 py-3 mb-4 bg-muted rounded-xl">
+                      <p className="font-semibold text-sm">{displayName}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                  )}
+                  {navItems.map((item) => (
+                    <NavLink key={item.path} item={item} onClick={() => setMobileOpen(false)} />
+                  ))}
+                  <button
+                    onClick={() => logout()}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all mt-4"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </header>
 
