@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2, CircleDot, Trophy, ChevronDown, ChevronUp, History } from "lucide-react";
@@ -6,15 +6,19 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import { supabase } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import confetti from "canvas-confetti";
 
 export default function ContributionSection({ group, contributions, userId, membership, members = [] }) {
   const [marking, setMarking] = useState(false);
+  const [justPaid, setJustPaid] = useState(false);
+  const [advancingRound, setAdvancingRound] = useState(false);
+  const [roundJustAdvanced, setRoundJustAdvanced] = useState(false);
   const [expandedRound, setExpandedRound] = useState(null);
+  const payButtonRef = useRef(null);
   const queryClient = useQueryClient();
   const amount = parseInt(group.group_type) || 10;
   const currentRound = group.current_round || 1;
 
-  // Current round contributions
   const currentRoundContributions = contributions.filter((c) => c.round === currentRound);
   const myContribution = contributions.find((c) => c.user_id === userId && c.round === currentRound);
   const paidCount = currentRoundContributions.filter((c) => c.status === "paid").length;
@@ -23,7 +27,7 @@ export default function ContributionSection({ group, contributions, userId, memb
   const isAdmin = group.admin_id === userId;
   const isPaid = myContribution?.status === "paid";
 
-  // Past rounds (all rounds before current)
+  // Past rounds
   const pastRounds = [];
   for (let r = currentRound - 1; r >= 1; r--) {
     const roundContribs = contributions.filter((c) => c.round === r);
@@ -38,6 +42,46 @@ export default function ContributionSection({ group, contributions, userId, memb
       isComplete: roundPaid >= totalMembers,
     });
   }
+
+  // ── Confetti helpers ──────────────────────────────────────
+  const fireConfetti = () => {
+    // Left side burst
+    confetti({
+      particleCount: 60,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: 0.7 },
+      colors: ["#1a7a4a", "#4ade80", "#86efac", "#fbbf24", "#ffffff"],
+    });
+    // Right side burst
+    confetti({
+      particleCount: 60,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: 0.7 },
+      colors: ["#1a7a4a", "#4ade80", "#86efac", "#fbbf24", "#ffffff"],
+    });
+  };
+
+  const fireTrophyConfetti = () => {
+    // Big celebration for round advancement
+    const duration = 2000;
+    const end = Date.now() + duration;
+    const interval = setInterval(() => {
+      if (Date.now() > end) {
+        clearInterval(interval);
+        return;
+      }
+      confetti({
+        particleCount: 30,
+        angle: Math.random() * 360,
+        spread: 70,
+        origin: { x: Math.random(), y: Math.random() * 0.5 },
+        colors: ["#1a7a4a", "#4ade80", "#fbbf24", "#f97316", "#ffffff"],
+        scalar: 1.2,
+      });
+    }, 200);
+  };
 
   // ── Mark as paid ──────────────────────────────────────────
   const handleMarkPaid = async () => {
@@ -76,10 +120,22 @@ export default function ContributionSection({ group, contributions, userId, memb
         .eq("id", group.id);
       if (groupError) throw groupError;
 
+      // 🎉 Animate!
+      setJustPaid(true);
+      fireConfetti();
+
+      toast.success(`₹${amount} contribution marked as paid! 🎉`, {
+        duration: 4000,
+        icon: "✅",
+      });
+
       queryClient.invalidateQueries({ queryKey: ["group-contributions"] });
       queryClient.invalidateQueries({ queryKey: ["group-detail"] });
       queryClient.invalidateQueries({ queryKey: ["my-memberships"] });
-      toast.success("Contribution marked as paid!");
+
+      // Reset animation after 2 seconds
+      setTimeout(() => setJustPaid(false), 2000);
+
     } catch (err) {
       toast.error(err.message || "Failed to mark as paid");
     } finally {
@@ -89,6 +145,7 @@ export default function ContributionSection({ group, contributions, userId, memb
 
   // ── Advance round ─────────────────────────────────────────
   const handleAdvanceRound = async () => {
+    setAdvancingRound(true);
     try {
       const nextRound = currentRound + 1;
       const { error } = await supabase
@@ -108,12 +165,24 @@ export default function ContributionSection({ group, contributions, userId, memb
       );
       await Promise.all(notifPromises);
 
+      // 🏆 Big celebration!
+      setRoundJustAdvanced(true);
+      fireTrophyConfetti();
+
+      toast.success(`🏆 Round ${currentRound} complete! Round ${nextRound} has started!`, {
+        duration: 5000,
+      });
+
       queryClient.invalidateQueries({ queryKey: ["group-detail"] });
       queryClient.invalidateQueries({ queryKey: ["group-contributions"] });
       queryClient.invalidateQueries({ queryKey: ["unread-notifs"] });
-      toast.success(`🎉 Round ${currentRound} complete! Round ${nextRound} started!`);
+
+      setTimeout(() => setRoundJustAdvanced(false), 3000);
+
     } catch (err) {
       toast.error(err.message || "Failed to advance round");
+    } finally {
+      setAdvancingRound(false);
     }
   };
 
@@ -127,16 +196,27 @@ export default function ContributionSection({ group, contributions, userId, memb
         </div>
 
         {/* My payment status */}
-        <div className={`p-4 rounded-xl border-2 ${isPaid ? "border-primary/30 bg-primary/5" : "border-destructive/30 bg-destructive/5"}`}>
+        <div className={`p-4 rounded-xl border-2 transition-all duration-500 ${
+          justPaid
+            ? "border-primary bg-primary/10 scale-[1.02]"
+            : isPaid
+            ? "border-primary/30 bg-primary/5"
+            : "border-destructive/30 bg-destructive/5"
+        }`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {isPaid ? (
-                <CheckCircle2 className="w-6 h-6 text-primary" />
+              {/* Animated checkmark */}
+              {isPaid || justPaid ? (
+                <div className={`transition-all duration-300 ${justPaid ? "scale-125" : "scale-100"}`}>
+                  <CheckCircle2 className={`w-6 h-6 ${justPaid ? "text-primary animate-bounce" : "text-primary"}`} />
+                </div>
               ) : (
                 <CircleDot className="w-6 h-6 text-destructive" />
               )}
               <div>
-                <p className="font-semibold text-sm">{isPaid ? "You have paid" : "Payment pending"}</p>
+                <p className="font-semibold text-sm">
+                  {justPaid ? "Payment successful! 🎉" : isPaid ? "You have paid" : "Payment pending"}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   {isPaid
                     ? `Paid on ${new Date(myContribution.paid_at).toLocaleDateString()}`
@@ -144,15 +224,39 @@ export default function ContributionSection({ group, contributions, userId, memb
                 </p>
               </div>
             </div>
-            {!isPaid && (
-              <Button onClick={handleMarkPaid} disabled={marking} className="rounded-xl">
-                {marking ? <Loader2 className="w-4 h-4 animate-spin" /> : `Pay ₹${amount}`}
+
+            {/* Pay button with animation */}
+            {!isPaid && !justPaid && (
+              <Button
+                ref={payButtonRef}
+                onClick={handleMarkPaid}
+                disabled={marking}
+                className={`rounded-xl transition-all duration-200 ${
+                  marking ? "scale-95 opacity-80" : "hover:scale-105 active:scale-95"
+                }`}
+              >
+                {marking ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Marking...
+                  </span>
+                ) : (
+                  `Pay ₹${amount}`
+                )}
               </Button>
+            )}
+
+            {/* Success state button */}
+            {justPaid && (
+              <div className="flex items-center gap-2 text-primary font-semibold text-sm animate-pulse">
+                <CheckCircle2 className="w-5 h-5" />
+                Paid!
+              </div>
             )}
           </div>
         </div>
 
-        {/* Member payment list */}
+        {/* Member list */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-muted-foreground">All members this round</p>
@@ -176,17 +280,30 @@ export default function ContributionSection({ group, contributions, userId, memb
           </div>
         </div>
 
-        {/* Advance round button (admin only, all paid) */}
+        {/* Advance round (admin only) */}
         {allPaid && isAdmin && group.status === "active" && (
           <div className="pt-2 border-t border-border">
             <div className="flex items-center gap-2 mb-3">
-              <Trophy className="w-5 h-5 text-primary" />
+              <Trophy className={`w-5 h-5 text-primary ${roundJustAdvanced ? "animate-bounce" : ""}`} />
               <p className="text-sm font-semibold text-primary">
                 All members paid! Ready for Round {currentRound + 1}
               </p>
             </div>
-            <Button onClick={handleAdvanceRound} className="w-full rounded-xl">
-              Start Round {currentRound + 1} →
+            <Button
+              onClick={handleAdvanceRound}
+              disabled={advancingRound}
+              className={`w-full rounded-xl transition-all duration-200 ${
+                advancingRound ? "scale-95 opacity-80" : "hover:scale-[1.02] active:scale-95"
+              }`}
+            >
+              {advancingRound ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Starting Round {currentRound + 1}...
+                </span>
+              ) : (
+                `Start Round ${currentRound + 1} →`
+              )}
             </Button>
           </div>
         )}
@@ -210,9 +327,8 @@ export default function ContributionSection({ group, contributions, userId, memb
           </div>
 
           <div className="space-y-2">
-            {pastRounds.map(({ round, contributions: roundContribs, paidCount: rPaid, totalCollected, target, isComplete }) => (
+            {pastRounds.map(({ round, contributions: roundContribs, paidCount: rPaid, totalCollected, isComplete }) => (
               <div key={round} className="border border-border rounded-xl overflow-hidden">
-                {/* Round summary row */}
                 <button
                   className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
                   onClick={() => setExpandedRound(expandedRound === round ? null : round)}
@@ -232,9 +348,7 @@ export default function ContributionSection({ group, contributions, userId, memb
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      isComplete
-                        ? "bg-primary/10 text-primary"
-                        : "bg-muted text-muted-foreground"
+                      isComplete ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
                     }`}>
                       {isComplete ? "Completed" : "Partial"}
                     </span>
@@ -245,7 +359,6 @@ export default function ContributionSection({ group, contributions, userId, memb
                   </div>
                 </button>
 
-                {/* Expanded member details */}
                 {expandedRound === round && (
                   <div className="px-3 pb-3 border-t border-border bg-muted/20">
                     <div className="pt-2 space-y-1.5">
@@ -262,7 +375,6 @@ export default function ContributionSection({ group, contributions, userId, memb
                           </div>
                         </div>
                       ))}
-                      {/* Members who didn't pay this round */}
                       {members
                         .filter((m) => !roundContribs.find((c) => c.user_id === m.user_id))
                         .map((m) => (
