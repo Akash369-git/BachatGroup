@@ -32,7 +32,6 @@ export default function Register() {
     
     // If session exists immediately, email confirmation is disabled → go to dashboard
     if (data.session) {
-      window.location.href = "/dashboard";
       return;
     }
     
@@ -55,7 +54,6 @@ export default function Register() {
         type: "signup",
       });
       if (error) throw error;
-      window.location.href = "/dashboard";
     } catch (err) {
       setError(err.message || "Invalid verification code");
     } finally {
@@ -78,7 +76,7 @@ export default function Register() {
   await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${window.location.origin}/dashboard`,
+      redirectTo: `${window.location.origin}/`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
