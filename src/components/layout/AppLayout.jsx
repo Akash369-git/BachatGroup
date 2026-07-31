@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { path: "/groups/create", label: "Create Group", icon: Plus },
   { path: "/groups/join", label: "Join Group", icon: UserPlus },
   { path: "/notifications", label: "Notifications", icon: Bell },

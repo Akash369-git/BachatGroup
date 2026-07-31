@@ -18,6 +18,10 @@ export const AuthProvider = ({ children }) => {
       if (session?.user) {
         setUser(session.user);
         setIsAuthenticated(true);
+        // Redirect to dashboard if on landing or login page
+        if (window.location.pathname === '/' || window.location.pathname === '/login') {
+          window.location.replace('/dashboard');
+        }
       } else {
         setIsAuthenticated(false);
         setUser(null);
@@ -31,6 +35,10 @@ export const AuthProvider = ({ children }) => {
       if (session?.user) {
         setUser(session.user);
         setIsAuthenticated(true);
+        // Redirect to dashboard after Google OAuth or email login
+        if (window.location.pathname === '/' || window.location.pathname === '/login') {
+          window.location.replace('/dashboard');
+        }
       } else {
         setUser(null);
         setIsAuthenticated(false);
@@ -43,13 +51,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = async (shouldRedirect = true) => {
-  await supabase.auth.signOut();
-  setUser(null);
-  setIsAuthenticated(false);
-  if (shouldRedirect) {
-    window.location.replace('/login');
-  }
-};
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsAuthenticated(false);
+    if (shouldRedirect) {
+      window.location.replace('/');
+    }
+  };
 
   const navigateToLogin = () => {
     window.location.href = '/login';

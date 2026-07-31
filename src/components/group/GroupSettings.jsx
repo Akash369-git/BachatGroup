@@ -57,7 +57,7 @@ export default function GroupSettings({ group, open, onClose }) {
       queryClient.invalidateQueries({ queryKey: ["group-detail"] });
       toast.success("Group has been closed");
       onClose();
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       toast.error(err.message || "Failed to close group");
     } finally {
