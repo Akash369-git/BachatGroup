@@ -8,7 +8,7 @@ const features = [
   {
     icon: Users,
     title: "Group Savings",
-    desc: "Create savings groups of Rs.10, Rs.50 or Rs.100 per round with friends, family or colleagues.",
+    desc: "Create savings groups of ₹10, ₹50 or ₹100 per round with friends, family or colleagues.",
     color: "bg-primary/10 text-primary",
   },
   {
@@ -44,15 +44,15 @@ const features = [
 ];
 
 const steps = [
-  { step: "01", title: "Create a Group", desc: "Choose Rs.10, Rs.50 or Rs.100 tier. Set frequency — daily, weekly or monthly." },
+  { step: "01", title: "Create a Group", desc: "Choose ₹10, ₹50 or ₹100 tier. Set frequency — daily, weekly or monthly." },
   { step: "02", title: "Invite Members", desc: "Share your unique invite code or link. Members join instantly." },
   { step: "03", title: "Save Together", desc: "Everyone contributes each round. Request withdrawals — all members vote to approve." },
 ];
 
 const tiers = [
-  { amount: "10", members: "Up to 20", freq: "Daily / Weekly / Monthly", color: "border-primary/30" },
-  { amount: "50", members: "Up to 30", freq: "Daily / Weekly / Monthly", color: "border-primary/60", popular: true },
-  { amount: "100", members: "Up to 50", freq: "Daily / Weekly / Monthly", color: "border-primary/30" },
+  { amount: "10", members: "Up to 20 members", freq: "Daily / Weekly / Monthly", color: "border-primary/30" },
+  { amount: "50", members: "Up to 30 members", freq: "Daily / Weekly / Monthly", color: "border-primary/60", popular: true },
+  { amount: "100", members: "Up to 50 members", freq: "Daily / Weekly / Monthly", color: "border-primary/30" },
 ];
 
 export default function Landing() {
@@ -64,7 +64,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">Rs</span>
+              <span className="text-primary-foreground font-bold text-lg">₹</span>
             </div>
             <span className="font-heading font-bold text-xl">
               Bachat<span className="text-primary">Group</span>
@@ -109,7 +109,7 @@ export default function Landing() {
           </Link>
         </div>
 
-        {/* Social proof */}
+        {/* Trust indicators */}
         <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-primary" />
@@ -117,7 +117,7 @@ export default function Landing() {
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-primary" />
-            Works with UPI / cash
+            Works with UPI and cash
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-primary" />
@@ -186,7 +186,7 @@ export default function Landing() {
                     Most Popular
                   </div>
                 )}
-                <div className="font-heading font-bold text-4xl text-primary mb-1">Rs.{t.amount}</div>
+                <div className="font-heading font-bold text-4xl text-primary mb-1">₹{t.amount}</div>
                 <div className="text-xs text-muted-foreground mb-4">per member per round</div>
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center justify-center gap-2">
@@ -223,7 +223,7 @@ export default function Landing() {
             Ready to start saving together?
           </h2>
           <p className="text-muted-foreground mb-8">
-            Join hundreds of groups already saving transparently with BachatGroup.
+            Be among the first to save transparently with BachatGroup.
             Free forever. No credit card needed.
           </p>
           <Link to="/register">
@@ -240,7 +240,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">Rs</span>
+              <span className="text-primary-foreground font-bold text-sm">₹</span>
             </div>
             <span className="font-heading font-bold text-sm">BachatGroup</span>
           </div>
