@@ -1,6 +1,9 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/((?!google3a513f72e2c5794c\\.html).*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
